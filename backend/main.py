@@ -16,12 +16,20 @@ from vector_store import create_vector_store
 BASE_DIR = Path(__file__).resolve().parent
 UPLOAD_DIR = BASE_DIR / "uploads"
 ASSET_DIR = BASE_DIR / "assets"
+FRONTEND_DIST_DIR = BASE_DIR / "frontend" / "dist"
+FRONTEND_ASSET_DIR = FRONTEND_DIST_DIR / "frontend-assets"
 
 UPLOAD_DIR.mkdir(exist_ok=True)
 ASSET_DIR.mkdir(exist_ok=True)
 
 app = FastAPI(title="Offiline Doc Chatbot")
 app.mount("/assets", StaticFiles(directory=ASSET_DIR), name="assets")
+if FRONTEND_ASSET_DIR.exists():
+    app.mount(
+        "/frontend-assets",
+        StaticFiles(directory=FRONTEND_ASSET_DIR),
+        name="frontend-assets",
+    )
 
 allowed_origins = [
     origin.strip()
@@ -52,6 +60,10 @@ def serialize_document_chunk(chunk: dict) -> dict:
 
 @app.get("/")
 async def home():
+    frontend_index = FRONTEND_DIST_DIR / "index.html"
+    if frontend_index.exists():
+        return FileResponse(frontend_index)
+
     return {
         "message": "Offline Doc Chatbot API is running.",
         "frontend": "Run the React app from backend/frontend at http://127.0.0.1:5173",
